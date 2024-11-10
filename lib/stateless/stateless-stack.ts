@@ -1,10 +1,18 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CustomLambda } from '../constructs/custom-lambda';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
+import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { CfnScheduleGroup } from 'aws-cdk-lib/aws-scheduler';
+import { Table } from 'aws-cdk-lib/aws-dynamodb';
+
+export interface StatelessStackProps extends StackProps {
+  readonly scheduleGroup: CfnScheduleGroup;
+  readonly stateTable: Table;
+}
 
 export class StatelessStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: StatelessStackProps) {
     super(scope, id, props);
 
     // Create a queue that will be used to receive messages from the Lambda function
@@ -12,13 +20,40 @@ export class StatelessStack extends Stack {
       queueName: 'EventBridgeTargetQueue',
     });
 
+    // Create a role that will be used by EventBridge Scheduler to send messages to the queue
+    const eventBridgeRole = new Role(this, 'EventBridgeRole', {
+      assumedBy: new ServicePrincipal('scheduler.amazonaws.com'),
+    });
+    targetQueue.grantSendMessages(eventBridgeRole);
+
     // Create a Lambda function that will create future scheduled events in EventBridge
     const seedSchedulesFunction = new CustomLambda(this, 'SeedSchedulesFunction', {
       path: 'src/seed-scheduled-function.ts',
       environmentVariables: {
-        EVENTBRIDGE_BUS: ,
-        TARGET_QUEUE: targetQueue.queueUrl,
+        EVENTBRIDGE_GROUP_NAME: props.scheduleGroup.name,
+        EVENTBRIDGE_ROLE_ARN: eventBridgeRole.roleArn,
+        TARGET_QUEUE_ARN: targetQueue.queueArn,
+        TIMEZONE: 'Europe/London',
       },
     }).lambda;
+  
+    // Grant the Lambda function permissions to create scheduled events in EventBridge
+    seedSchedulesFunction.addToRolePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['scheduler:CreateSchedule', 'scheduler:DeleteSchedule', 'scheduler:UpdateSchedule'],
+      resources: [`arn:aws:scheduler:${this.region}:${this.account}:schedule/${props.scheduleGroup.name}/*`],
+    }));
+  
+    // Grant the Lambda function permissions to pass the EventBridge role to the EventBridge service
+    seedSchedulesFunction.addToRolePolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['iam:PassRole'],
+      resources: [`arn:aws:iam::${this.account}:role/*`],
+      conditions: {
+        StringLike: {
+          'iam:PassedToService': 'scheduler.amazonaws.com',
+        },
+      },
+    }));
   }
 }

@@ -23,12 +23,16 @@ npm install
 
 Deploy the project
 ```
-npx cdk deploy
+npx cdk deploy --all
 ```
 
 ## Configuration
 
 ## Usage
+
+```
+aws lambda invoke --function-name SeedSchedulesFunction outfile.txt
+```
 
 ## Cleaning Up
 

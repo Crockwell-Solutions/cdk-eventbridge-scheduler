@@ -5,6 +5,8 @@ import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { CfnScheduleGroup } from 'aws-cdk-lib/aws-scheduler';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
+import { Trail } from 'aws-cdk-lib/aws-cloudtrail';
+import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 
 export interface StatelessStackProps extends StackProps {
   readonly scheduleGroup: CfnScheduleGroup;
@@ -55,5 +57,30 @@ export class StatelessStack extends Stack {
         },
       },
     }));
+
+    // Create a Lambda function that will be called by EventBridge when any schedules change
+    const scheduleMonitorFunction = new CustomLambda(this, 'ScheduleMonitorFunction', {
+      path: 'src/schedule-monitor-function.ts',
+      environmentVariables: {
+        TABLE_NAME: props.stateTable.tableName,
+      }
+    }).lambda;
+    props.stateTable.grantReadWriteData(scheduleMonitorFunction);
+
+    // Create the eventbridge rule that will  trigger the scheduleMonitorFunction
+    const scheduledEventRule = Trail.onEvent(this, 'ScheduledEventRule', {
+      target: new LambdaFunction(scheduleMonitorFunction),
+    });
+    scheduledEventRule.addEventPattern({
+      account: [this.account],
+      source: ['aws.scheduler'],
+      detail: {
+        eventName: ['CreateSchedule', 'UpdateSchedule', 'DeleteSchedule'],
+        // Remove to open up to events from all groups
+        requestParameters: {
+          groupName: [props.scheduleGroup.name],
+        }
+      }
+    });
   }
 }

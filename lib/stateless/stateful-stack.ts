@@ -1,7 +1,7 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CfnScheduleGroup } from 'aws-cdk-lib/aws-scheduler';
-import { AttributeType, BillingMode, StreamViewType, Table, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
+import { AttributeType, BillingMode, ProjectionType, StreamViewType, Table, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
 
 export class StatefulStack extends Stack {
   // Export from this stack
@@ -22,10 +22,16 @@ export class StatefulStack extends Stack {
       billingMode: BillingMode.PAY_PER_REQUEST,
       encryption: TableEncryption.AWS_MANAGED,
       partitionKey: { name: 'PK', type: AttributeType.STRING },
-      sortKey: { name: 'SK', type: AttributeType.STRING },
       timeToLiveAttribute: 'ttl',
       contributorInsightsEnabled: true,
       stream: StreamViewType.NEW_AND_OLD_IMAGES,
+    });
+
+    this.stateTable.addGlobalSecondaryIndex({
+      indexName: 'GSI-Entity',
+      partitionKey: { name: 'groupName', type: AttributeType.STRING },
+      sortKey: { name: 'executionTime', type: AttributeType.STRING },
+      projectionType: ProjectionType.ALL,
     });
   }
 }

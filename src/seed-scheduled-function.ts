@@ -8,9 +8,10 @@
  */
 
 // Perform the necessary imports
-import { SchedulerClient, CreateScheduleCommand, UpdateScheduleCommand, FlexibleTimeWindowMode } from '@aws-sdk/client-scheduler';
+import { SchedulerClient, CreateScheduleCommand, UpdateScheduleCommand, DeleteScheduleCommand, FlexibleTimeWindowMode } from '@aws-sdk/client-scheduler';
 // Use the AWS Lambda Powertools Logger
 import { Logger } from '@aws-lambda-powertools/logger';
+import { randomUUID } from 'crypto';
 export const logger = new Logger();
 
 // Import the environment variables
@@ -40,9 +41,14 @@ interface ScheduledEventResponse {
 export async function handler(event: any) {
   logger.info('Processing lambda scheduled events seed function', { event: event });
 
+  // Create the IDs for the scheduled events as UUIDs
+  const schedule1: string = randomUUID().toUpperCase();
+  const schedule2: string = randomUUID().toUpperCase();
+  const schedule3: string = randomUUID().toUpperCase();
+
   // Create the first scheduled event for one hour in the future
   await createScheduledEvent(
-    'event-1',
+    schedule1,
     EVENTBRIDGE_GROUP_NAME,
     { message: 'Event 1' },
     TARGET_QUEUE_ARN,
@@ -50,6 +56,45 @@ export async function handler(event: any) {
     TIMEZONE,
     new Date(Date.now() + 60 * 60 * 1000).toISOString().split('.')[0],
   );
+
+  // Create the second scheduled event for two hours in the future
+  await createScheduledEvent(
+    schedule2,
+    EVENTBRIDGE_GROUP_NAME,
+    { message: 'Event 1' },
+    TARGET_QUEUE_ARN,
+    EVENTBRIDGE_ROLE_ARN,
+    TIMEZONE,
+    new Date(Date.now() + 120 * 60 * 1000).toISOString().split('.')[0],
+  );
+
+  // Create the third scheduled event for three hours in the future
+  await createScheduledEvent(
+    schedule3,
+    EVENTBRIDGE_GROUP_NAME,
+    { message: 'Event 1' },
+    TARGET_QUEUE_ARN,
+    EVENTBRIDGE_ROLE_ARN,
+    TIMEZONE,
+    new Date(Date.now() + 180 * 60 * 1000).toISOString().split('.')[0],
+  );
+
+  // Wait 5 seconds
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  // Update the second scheduled event to be four hours in the future
+  await updateScheduledEvent(
+    schedule2,
+    EVENTBRIDGE_GROUP_NAME,
+    { message: 'Event 1' },
+    TARGET_QUEUE_ARN,
+    EVENTBRIDGE_ROLE_ARN,
+    TIMEZONE,
+    new Date(Date.now() + 240 * 60 * 1000).toISOString().split('.')[0],
+  );
+
+  // Delete the first scheduled event
+  await deleteScheduledEvent(schedule1, EVENTBRIDGE_GROUP_NAME);
 
   logger.info('Scheduled events seed function completed');
 
@@ -228,6 +273,36 @@ async function updateScheduledEvent(
       );
     }
     logger.error('Error updating the EventBridge scheduled event', { error: err });
+    return {
+      success: false,
+      error: err,
+    };
+  }
+}
+
+/**
+ * Deletes a scheduled event from EventBridge.
+ *
+ * @param {string} name - The name of the scheduled event to delete.
+ * @param {string} groupName - The name of the group that the scheduled event belongs to.
+ * @returns {Promise<ScheduledEventResponse>} A promise that resolves to a ScheduledEventResponse indicating the success or failure of the operation.
+ *
+ * @throws {Error} If there is an error deleting the scheduled event.
+ */
+export async function deleteScheduledEvent(name: string, groupName: string): Promise<ScheduledEventResponse> {
+  const params = new DeleteScheduleCommand({
+    Name: name,
+    GroupName: groupName,
+  });
+
+  try {
+    const response = await ebClient.send(params);
+    logger.info('Response from EventBridge scheduler', { response: response });
+    return {
+      success: true,
+    };
+  } catch (err) {
+    logger.error('Error deleting the EventBridge scheduled event', { error: err });
     return {
       success: false,
       error: err,

@@ -24,6 +24,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 export const logger = new Logger();
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DateTime } from 'luxon';
 
 const TABLE_NAME = process.env.TABLE_NAME || '';
 
@@ -51,13 +52,36 @@ export async function handler(event: any) {
 
   // Create or update the scheduled event record in the DynamoDB table
   const record = event.detail;
+
+  // The execution time needs to be converted from the scheduleExpression and scheduleExpressionTimezone
+  const dateTimeString = record.requestParameters?.scheduleExpression
+    ? record.requestParameters?.scheduleExpression.match(/at\(([^)]+)\)/)[1]
+    : undefined;
+
+  // Create the item to write to the DynamoDB table
   const item = {
     PK: `${record.requestParameters?.groupName}#${record.requestParameters?.name}`,
     groupName: `${record.requestParameters?.groupName}`,
-    executionTime: `${record.requestParameters?.scheduleExpression}`,
+    ...(dateTimeString) && { 
+      executionTime: `${DateTime.fromISO(dateTimeString, { 
+        zone: record.requestParameters?.scheduleExpressionTimezone 
+      }).toISO()}`,
+      // Add a ttl attribute to the item to expire the record one month after the execution time
+      ttl: DateTime.fromISO(dateTimeString, { 
+        zone: record.requestParameters?.scheduleExpressionTimezone 
+      }).plus({ months: 1 }).toSeconds(),
+    },
+    ...(record.eventName === 'DeleteSchedule') && { deleted: true },
+    updatedAt: record.eventTime,
   };
-  await writeItem(TABLE_NAME, item);
 
+  // If there is a dateTimeString, or the event is a delete event, then we can write the item to the table
+  if (dateTimeString || record.eventName === 'DeleteSchedule') {
+    await writeItem(TABLE_NAME, item);
+  } else {
+    logger.info('Record has not been processed', { record: record });
+  }
+  
   return {
     statusCode: 200,
     body: JSON.stringify('Scheduled events monitor function completed'),
@@ -71,26 +95,28 @@ export async function handler(event: any) {
  *
  * @param {Object} tableName - The dynamodb table to be written to.
  * @param {Object} item - The change record to write to DynamoDB.
- * @param {boolean} onlyIfNotExists - optional will only write if the record does NOT already exist
- * @param {boolean} onlyIfExists - optional will only write if the record already exists
+ * @param {boolean} onlyNewerRecords - optional flag to only write the record if the updatedAt field is newer than the existing record.
  * @returns {Promise<boolean>} A Promise that resolves when the record is written, true if successful, false otherwise.
  */
 export async function writeItem(
   tableName: string,
   item: any,
-  onlyIfNotExists: boolean = false,
-  onlyIfExists: boolean = false,
+  onlyNewerRecords: boolean = false,
 ) {
   const params = {
     TableName: tableName,
     Item: item,
-    ...(onlyIfNotExists && { ConditionExpression: 'attribute_not_exists(PK)' }),
-    ...(onlyIfExists && { ConditionExpression: 'attribute_exists(PK)' }),
+    ...(onlyNewerRecords && { 
+      ConditionExpression: 'attribute_not_exists(PK) OR updatedAt < :updatedAt',
+      ExpressionAttributeValues: {
+        ':updatedAt': item.updatedAt,
+      },
+    }),
   };
 
   try {
     const response = await ddbDocClient.send(new PutCommand(params));
-    logger.debug('Successfully wrote item to DynamoDB', { response: response });
+    logger.info('Successfully wrote item to DynamoDB', { response: response });
     if (response.$metadata.httpStatusCode === 200) {
       return true;
     } else {

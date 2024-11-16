@@ -61,7 +61,7 @@ export async function handler(event: any) {
   await createScheduledEvent(
     schedule2,
     EVENTBRIDGE_GROUP_NAME,
-    { message: 'Event 1' },
+    { message: 'Event 2' },
     TARGET_QUEUE_ARN,
     EVENTBRIDGE_ROLE_ARN,
     TIMEZONE,
@@ -72,7 +72,7 @@ export async function handler(event: any) {
   await createScheduledEvent(
     schedule3,
     EVENTBRIDGE_GROUP_NAME,
-    { message: 'Event 1' },
+    { message: 'Event 3' },
     TARGET_QUEUE_ARN,
     EVENTBRIDGE_ROLE_ARN,
     TIMEZONE,
@@ -80,13 +80,13 @@ export async function handler(event: any) {
   );
 
   // Wait 5 seconds
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 
   // Update the second scheduled event to be four hours in the future
   await updateScheduledEvent(
     schedule2,
     EVENTBRIDGE_GROUP_NAME,
-    { message: 'Event 1' },
+    { message: 'Event 2 - Updated' },
     TARGET_QUEUE_ARN,
     EVENTBRIDGE_ROLE_ARN,
     TIMEZONE,

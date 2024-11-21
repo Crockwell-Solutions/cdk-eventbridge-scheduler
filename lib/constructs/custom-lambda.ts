@@ -54,6 +54,7 @@ export class CustomLambda extends Construct {
         LOG_LEVEL: props.logLevel || 'INFO',
         ...props.environmentVariables,
       },
+      ...props.reservedConcurrentExecutions && { reservedConcurrentExecutions: props.reservedConcurrentExecutions },
       runtime: Runtime.NODEJS_20_X,
       architecture: Architecture.ARM_64,
       handler: props.handler,

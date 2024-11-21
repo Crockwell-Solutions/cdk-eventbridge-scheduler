@@ -6,7 +6,8 @@ import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws
 import { CfnScheduleGroup } from 'aws-cdk-lib/aws-scheduler';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Trail } from 'aws-cdk-lib/aws-cloudtrail';
-import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
+import { SqsQueue } from 'aws-cdk-lib/aws-events-targets';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 export interface StatelessStackProps extends StackProps {
   readonly scheduleGroup: CfnScheduleGroup;
@@ -58,18 +59,37 @@ export class StatelessStack extends Stack {
       },
     }));
 
+    // Create a queue that will be used to receive messages from the EventBridge Rule
+    // This is used to ensure that messages are only processed one at a time and prevent the batching of messages
+    // from CloudTrail causing issues with Strong Consistency in DynamoDB
+    const scheduleMonitorQueue = new Queue(this, 'ScheduleMonitorQueue', {
+      queueName: 'ScheduleMonitorQueue',
+      visibilityTimeout: Duration.minutes(1),
+      retentionPeriod: Duration.days(1),
+    });
+
     // Create a Lambda function that will be called by EventBridge when any schedules change
     const scheduleMonitorFunction = new CustomLambda(this, 'ScheduleMonitorFunction', {
       path: 'src/schedule-monitor-function.ts',
       environmentVariables: {
         TABLE_NAME: props.stateTable.tableName,
-      }
+      },
+      reservedConcurrentExecutions: 1,
     }).lambda;
     props.stateTable.grantReadWriteData(scheduleMonitorFunction);
 
-    // Create the eventbridge rule that will  trigger the scheduleMonitorFunction
+    // Set the Lambda function as the target for the Schedule Monitor Queue
+    scheduleMonitorQueue.grantConsumeMessages(scheduleMonitorFunction);
+    const scheduleMonitorQueueSource = new SqsEventSource(scheduleMonitorQueue, {
+      batchSize: 100,
+      maxBatchingWindow: Duration.seconds(30),
+      maxConcurrency: 2,
+    });
+    scheduleMonitorFunction.addEventSource(scheduleMonitorQueueSource);
+
+    // Create the eventbridge rule that will send messages to the queue
     const scheduledEventRule = Trail.onEvent(this, 'ScheduledEventRule', {
-      target: new LambdaFunction(scheduleMonitorFunction),
+      target: new SqsQueue(scheduleMonitorQueue),
     });
     scheduledEventRule.addEventPattern({
       account: [this.account],

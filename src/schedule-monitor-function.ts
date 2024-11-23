@@ -81,8 +81,12 @@ export async function handler(event: any) {
             zone: record.requestParameters?.scheduleExpressionTimezone 
           }).toISO()}`,
         },
-        // Add a ttl attribute to the item to expire the record one month after the current time
-        ttl: Math.floor(Date.now() / 1000) + 2592000,
+        // Add a ttl attribute to the item to expire the record one month after the scheduledExpressionTime
+        ...(dateTimeString) && { ttl: Math.floor(DateTime.fromISO(dateTimeString, { 
+          zone: record.requestParameters?.scheduleExpressionTimezone 
+        }).plus({ months: 1 }).toSeconds()) },
+        // If there is no dateTimeString, then we can set the ttl to expire the record one month after now
+        ...(!dateTimeString) && { ttl: Math.floor(Date.now() / 1000) + 2592000 },
         ...(record.eventName === 'DeleteSchedule') && { deleted: true },
         updatedAt: record.eventTime,
       };

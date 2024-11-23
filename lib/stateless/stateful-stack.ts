@@ -28,7 +28,7 @@ export class StatefulStack extends Stack {
     });
 
     this.stateTable.addGlobalSecondaryIndex({
-      indexName: 'GSI-Entity',
+      indexName: 'GSI-GroupName',
       partitionKey: { name: 'groupName', type: AttributeType.STRING },
       sortKey: { name: 'executionTime', type: AttributeType.STRING },
       projectionType: ProjectionType.ALL,

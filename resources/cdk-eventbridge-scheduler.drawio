@@ -1,0 +1,86 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1.1 Safari/605.1.15" version="24.8.9">
+  <diagram name="AWS Architecture Diagram" id="7IXz5WHGzvjvhPnXK2mz">
+    <mxGraphModel dx="855" dy="542" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-2" value="StatefulStack" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-25;" vertex="1" parent="1">
+          <mxGeometry x="50" y="230" width="200" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-5" value="StatelessStack" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-25;" vertex="1" parent="1">
+          <mxGeometry x="270" y="230" width="410" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-8" value="Lambda Function (SeedSchedulesFunction)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-27;" vertex="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry x="33.14814814814815" y="283" width="164" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-9" value="SQS Queue (ScheduleMonitorQueue)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-27;" vertex="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry x="215.0370370370371" y="40" width="164" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-10" value="Lambda Function (ScheduleMonitorFunction)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-27;" vertex="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry x="27.18518518518519" y="40" width="164" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-11" value="EventBridge Rule (ScheduledEventRule)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-27;" vertex="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry x="215.0370370370371" y="275" width="164" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#BABABA;" edge="1" parent="cZSfLcR_Br6UB9ySUrjh-5" target="cZSfLcR_Br6UB9ySUrjh-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="75.92592592592592" y="83" as="sourcePoint" />
+            <mxPoint x="-7.5925925925925934" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-21" value="AWS&#xa;CloudTrail" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=#ffffff;fillColor=#232F3E;dashed=0;verticalLabelPosition=middle;verticalAlign=bottom;align=center;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;spacing=3;shape=mxgraph.aws4.productIcon;prIcon=mxgraph.aws4.cloudtrail;fontFamily=Courier New;spacingBottom=-2;" vertex="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry x="79.68" y="178" width="70.94" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#BABABA;" edge="1" parent="cZSfLcR_Br6UB9ySUrjh-5" source="cZSfLcR_Br6UB9ySUrjh-21">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-32.14814814814815" y="262" as="sourcePoint" />
+            <mxPoint x="260" y="316" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="203.22222222222223" y="220" />
+              <mxPoint x="203.22222222222223" y="316" />
+              <mxPoint x="246.5" y="316" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#BABABA;" edge="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="297.55555555555554" y="280" as="sourcePoint" />
+            <mxPoint x="297.55555555555554" y="150" as="targetPoint" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#BABABA;exitX=0.26;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="cZSfLcR_Br6UB9ySUrjh-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="252.67703703703705" y="80" as="sourcePoint" />
+            <mxPoint x="135.962962962963" y="80" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-3" value="DynamoDB Table (ScheduleStateTable)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-27;" vertex="1" parent="1">
+          <mxGeometry x="70" y="340" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-4" value="EventBridge Schedule Group (DemoScheduleGroup)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;whiteSpace=wrap;html=1;fontFamily=Courier New;verticalAlign=bottom;horizontal=1;spacingBottom=-46;" vertex="1" parent="1">
+          <mxGeometry x="70" y="460" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0.625;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#BABABA;" edge="1" parent="1" target="cZSfLcR_Br6UB9ySUrjh-4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="554" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="260" y="554" />
+              <mxPoint x="260" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZSfLcR_Br6UB9ySUrjh-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#BABABA;" edge="1" parent="1" target="cZSfLcR_Br6UB9ySUrjh-21">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="190" y="482" as="sourcePoint" />
+            <mxPoint x="192" y="511" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="260" y="483" />
+              <mxPoint x="260" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

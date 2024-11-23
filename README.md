@@ -5,6 +5,19 @@ This is a demonstration of the Observer Pattern in Serverless Architecture.
 
 ## Description
 
+At the core of this architecture is CloudTrail. We leverage monitoring of the EventBridge Schedule API calls:
+
+![Overall Architecture](resources/cdk-eventbridge-scheduler.png)
+
+Independently to the core logic of the schedule creation, our service does the following steps:
+1. CloudTrail picks up the EventBridge API events and they are published on the main Event Bus
+2. An EventBridge rule filters for these events and pushes them to an SQS queue
+3. The queue will batch the messages and send them to the `ScheduleMonitorFunction`. This Lambda will process the messages and create/update relevant records in DynamoDb
+
+A queue is used during Step 2 because CloudTrail will not guarantee the order of events that are delivered. We need to ensure that changes are processed in order, so SQS will re-batch the messages, which are then sorted as they are processed in the `ScheduleMonitorFunction` Lambda Function.
+
+To see how this works, deploy the demo repo and run the `SeedSchedulesFunction`. This creates three scheduled events, waits a few seconds then modifies one of them and deleted one of them. This demonstrate the functionality of the solution.
+
 
 ## Features
 
